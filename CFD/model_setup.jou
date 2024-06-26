@@ -1,0 +1,251 @@
+; INFO
+;     	This journal file is build for Ansys Fluent 2022R1
+
+;     	Running this journal file will setup your case and initialize your simulation. Afterwards
+;	it can be copied to a HPC for further computations.
+
+
+; READ MESH
+;/file/read-case/sample1.msh
+
+define/models/solver/pressure-based    ; set the solver to pressure-based (in stead of density-based)
+yes
+
+/define/models/unsteady-1st-order?	; set time to transient (1st order)
+yes
+
+
+/define/operating-conditions/gravity 	;enable gravity and enter the correct values for the model. in this case, gravity acts in the negative z-direction
+yes
+0
+0
+-9.81
+
+; TURBULANCE MODEL
+/define/models/viscous/ke-rng?		; enable RANS model with k-e equations. The RNG is better for both turbulent and laminar regions
+yes
+
+/define/models/viscous/near-wall-treatment/enhanced-wall-treatment	;Enable enhanced wall functions? [no]
+yes
+
+; SPECIES TRANSPORT
+/define/models/species/species-transport	; enable species transport (without combustion). the species is hydrogen and air (already available in fluent)
+yes
+hydrogen-air
+
+/define/models/viscous/turb-buoyancy-effects	; enable full bouyancy effects to also adapt \epsilon to bouyancy (k-e model, see user&theory guide)
+2
+
+; BOUNDARY CONDITIONS
+/define/boundary-conditions/zone-type
+outlet
+pressure-outlet
+
+
+/define/boundary-conditions/zone-type
+;zone id/name/list [] 
+inlet
+;external-type
+velocity-inlet
+
+; inlet
+/define/boundary-conditions/velocity-inlet
+inlet
+no
+no
+yes
+yes
+no
+"IF(t<240[s],38[m s^-1],0[m s^-1])"
+no
+0
+no
+300
+no
+no
+yes
+5
+10
+yes
+no
+1
+no
+0
+no
+0
+
+
+; outlet
+/define/boundary-conditions/pressure-outlet outlet
+yes
+no
+0
+no
+300
+no
+yes
+no
+no
+yes
+5
+10
+no
+no
+0
+no
+0.21
+no
+0
+yes
+no
+no
+no
+
+; MATERIALS
+/define/materials/change-create
+hydrogen-air
+hydrogen-air
+no
+yes
+real-gas-aungier-redlich-kwong
+no
+no
+no
+no
+
+; METHODS
+;Pressure-Velocity Coupling
+/solve/set/p-v-coupling
+; 20 = SIMPLE	21=SIMPLEC	22=PISO
+20
+
+;Pressure
+/solve/set/discretization-scheme/pressure
+; 10=STANDARD	11=LINEAR	12=2nd ORDER	13=BODY FORCE WEIGHTED	14=PRESTO!
+12
+
+;Momentum
+/solve/set/discretization-scheme/mom
+; 0= 1st ORDER UPWIND	1=2nd ORDER UPWIND	2=POWER LAW	4=QUICK		5=3th ORDER MUSCL
+1
+
+;k
+/solve/set/discretization-scheme/k
+; 0= 1st ORDER UPWIND	1=2nd ORDER UPWIND	2=POWER LAW	4=QUICK		5=3th ORDER MUSCL
+0
+
+;e
+/solve/set/discretization-scheme/epsilon
+; 0= 1st ORDER UPWIND	1=2nd ORDER UPWIND	2=POWER LAW	4=QUICK		5=3th ORDER MUSCL
+0
+
+;h2
+/solve/set/discretization-scheme/species-0
+; 0= 1st ORDER UPWIND	1=2nd ORDER UPWIND	2=POWER LAW	4=QUICK		5=3th ORDER MUSCL
+1
+
+;o2
+/solve/set/discretization-scheme/species-1
+; 0= 1st ORDER UPWIND	1=2nd ORDER UPWIND	2=POWER LAW	4=QUICK		5=3th ORDER MUSCL
+1
+
+;h2o
+/solve/set/discretization-scheme/species-2
+; 0= 1st ORDER UPWIND	1=2nd ORDER UPWIND	2=POWER LAW	4=QUICK		5=3th ORDER MUSCL
+1
+
+;Energy
+/solve/set/discretization-scheme/temperature
+; 0= 1st ORDER UPWIND	1=2nd ORDER UPWIND	2=POWER LAW	4=QUICK		5=3th ORDER MUSCL
+1
+
+;CREATE POINTS
+
+;CREATE LINE
+
+;SAVE DATA
+;	Data export can be setup here.
+
+
+; AUTOSAVE
+/file/auto-save/save-data-file-every
+flow-time
+/file/auto-save/data-frequency
+20
+/file/auto-save/case-frequency
+each-time
+/file/auto-save/append-file-name-with
+flow-time
+6
+
+; CONVERGENCE
+/solve/convergence-conditions/check-for
+;solution-convergence
+1
+q
+;
+/solve/convergence-conditions/condition
+;All conditions are met
+1
+q
+;
+/solve/convergence-conditions/frequency
+;1
+1
+q
+;
+/solve/monitors/residual/convergence-criteria
+1e-6
+1e-6
+1e-6
+1e-6
+1e-6
+1e-6
+1e-6
+1e-6
+1e-6
+1e-6
+
+; INITIALIZE
+/solve/initialize/initialize
+
+; PATCH
+;h2
+/solve/patch
+fluid
+,
+species-0
+0
+
+;o2
+/solve/patch
+fluid
+,
+species-1
+0.23
+
+;h2o
+/solve/patch
+fluid
+,
+species-2
+0
+
+;SIMULATE
+/solve/set/transient-controls/fixed-user-specified
+yes
+
+/solve/set/transient-controls/number-of-time-steps
+500
+
+/solve/set/transient-controls/time-step-size
+;"IF(t<0.1[s],0.001[s],IF(t<10[s],0.01[s],IF(t<100[s],0.1[s],0.1[s])))"
+0.0001
+
+/solve/set/transient-controls/max-iterations-per-time-step
+30
+
+/file/write-case-data
+,
+;exit
+;yes
